@@ -3,110 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Persistent Button Manager</title>
+    <title>Login and Edit Feature</title>
     <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #1e3c72, #2a5298);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
-            margin: 0;
+            justify-content: center;
+            min-height: 100vh;
+            color: #ffffff;
         }
 
         .header {
             width: 100%;
             display: flex;
             justify-content: flex-end;
-            margin-bottom: 20px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
         }
 
-        .edit-button {
+        .login-button, .edit-button {
             padding: 10px 20px;
-            background-color: #007bff;
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 30px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .edit-button:hover {
-            background-color: #0056b3;
+        .login-button:hover, .edit-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(255, 126, 95, 0.5);
         }
 
         .button-container {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
             width: 100%;
-            max-width: 500px;
-            text-align: center;
+            max-width: 600px;
+            margin-top: 100px;
         }
 
         .dynamic-button {
             display: inline-flex;
             align-items: center;
-            padding: 10px 20px;
-            background-color: #4caf50;
+            justify-content: center;
+            padding: 15px 25px;
+            background: linear-gradient(90deg, #43cea2, #185a9d);
             color: white;
             text-decoration: none;
-            font-size: 16px;
+            font-size: 18px;
             border: none;
-            border-radius: 5px;
+            border-radius: 30px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .dynamic-button img {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
+            width: 30px;
+            height: 30px;
+            margin-right: 15px;
+            border-radius: 50%;
+            border: 2px solid #fff;
         }
 
         .dynamic-button:hover {
-            background-color: #45a049;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(67, 206, 162, 0.5);
         }
 
-        #popup-form {
+        #login-form, #popup-form {
             display: none;
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            padding: 20px;
+            background: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 20px 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
             z-index: 1000;
         }
 
-        #popup-form input {
-            width: calc(100% - 20px);
-            margin-bottom: 10px;
+        #login-form input, #popup-form input {
+            width: 100%;
+            margin-bottom: 15px;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            font-size: 16px;
         }
 
-        #popup-form button {
-            margin-top: 10px;
+        #login-form button, #popup-form button {
             padding: 10px 15px;
             border: none;
             border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
             cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        #popup-form .save-button {
-            background-color: #28a745;
+        #login-form .login-submit, #popup-form .save-button {
+            background: #43cea2;
             color: white;
         }
 
-        #popup-form .close-button {
-            background-color: #dc3545;
+        #login-form .login-submit:hover, #popup-form .save-button:hover {
+            background: #185a9d;
+        }
+
+        #login-form .close-button, #popup-form .close-button {
+            background: #ff7e5f;
             color: white;
+        }
+
+        #login-form .close-button:hover, #popup-form .close-button:hover {
+            background: #feb47b;
         }
 
         #overlay {
@@ -116,109 +145,128 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.7);
             z-index: 999;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        #login-form, #popup-form {
+            animation: fadeIn 0.5s ease;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <button class="edit-button" id="edit-button">Edit</button>
+        <button class="login-button" id="login-button">Login</button>
+        <button class="edit-button" id="edit-button" style="display: none;">Edit</button>
     </div>
-    <div class="button-container" id="button-container"></div>
-
     <div id="overlay"></div>
 
+    <div id="login-form">
+        <h3 style="text-align: center; color: #333;">Login</h3>
+        <input type="text" id="username" placeholder="Enter Username" required>
+        <input type="password" id="password" placeholder="Enter Password" required>
+        <button class="login-submit" id="login-submit">Login</button>
+    </div>
+
     <div id="popup-form">
-        <h3>Add/Edit Button</h3>
+        <h3 style="text-align: center; color: #333;">Add/Edit Button</h3>
         <input type="text" id="button-name" placeholder="Enter Button Name" required>
         <input type="text" id="button-link" placeholder="Enter Button Link" required>
         <input type="text" id="button-logo" placeholder="Enter Button Logo URL" required>
         <button class="save-button" id="save-button">Save</button>
-        <button class="close-button" id="close-button">Close</button>
+        <button class="close-button" id="close-popup">Close</button>
     </div>
 
-    <script>
-        const editButton = document.getElementById('edit-button');
-        const popupForm = document.getElementById('popup-form');
-        const overlay = document.getElementById('overlay');
-        const saveButton = document.getElementById('save-button');
-        const closeButton = document.getElementById('close-button');
-        const buttonContainer = document.getElementById('button-container');
-        const buttonNameInput = document.getElementById('button-name');
-        const buttonLinkInput = document.getElementById('button-link');
-        const buttonLogoInput = document.getElementById('button-logo');
+    <div class="button-container" id="button-container"></div>
 
-        let editingButtonIndex = null;
+    <script>
+        const loginButton = document.getElementById('login-button');
+        const editButton = document.getElementById('edit-button');
+        const loginForm = document.getElementById('login-form');
+        const popupForm = document.getElementById('popup-form');
+        const loginSubmit = document.getElementById('login-submit');
+        const saveButton = document.getElementById('save-button');
+        const overlay = document.getElementById('overlay');
+        const closePopup = document.getElementById('close-popup');
+        const buttonContainer = document.getElementById('button-container');
+
+        const USERNAME = "nasrin";
+        const PASSWORD = "rahiyan";
+
         let buttons = JSON.parse(localStorage.getItem('buttons')) || [];
 
-        // Load buttons from localStorage
         function loadButtons() {
             buttonContainer.innerHTML = '';
-            buttons.forEach((button, index) => {
+            buttons.forEach((button) => {
                 const newButton = document.createElement('a');
                 newButton.className = 'dynamic-button';
                 newButton.href = button.link;
-                newButton.innerHTML = `<img src="${button.logo}" alt="Button Logo"><span>${button.name}</span>`;
-                newButton.dataset.index = index;
+                newButton.innerHTML = `<img src="${button.logo}" alt="Logo"> ${button.name}`;
                 buttonContainer.appendChild(newButton);
             });
         }
 
+        loginButton.addEventListener('click', () => {
+            loginForm.style.display = 'block';
+            overlay.style.display = 'block';
+        });
+
+        loginSubmit.addEventListener('click', () => {
+            const usernameInput = document.getElementById('username').value.trim();
+            const passwordInput = document.getElementById('password').value.trim();
+
+            if (usernameInput === USERNAME && passwordInput === PASSWORD) {
+                alert('Login Successful!');
+                loginForm.style.display = 'none';
+                overlay.style.display = 'none';
+                loginButton.style.display = 'none';
+                editButton.style.display = 'block';
+            } else {
+                alert('Invalid username or password!');
+            }
+        });
+
+        overlay.addEventListener('click', () => {
+            loginForm.style.display = 'none';
+            popupForm.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+
         editButton.addEventListener('click', () => {
             popupForm.style.display = 'block';
             overlay.style.display = 'block';
-            buttonNameInput.value = '';
-            buttonLinkInput.value = '';
-            buttonLogoInput.value = '';
-            editingButtonIndex = null;
-        });
-
-        closeButton.addEventListener('click', () => {
-            popupForm.style.display = 'none';
-            overlay.style.display = 'none';
         });
 
         saveButton.addEventListener('click', () => {
-            const name = buttonNameInput.value.trim();
-            const link = buttonLinkInput.value.trim();
-            const logo = buttonLogoInput.value.trim();
+            const name = document.getElementById('button-name').value.trim();
+            const link = document.getElementById('button-link').value.trim();
+            const logo = document.getElementById('button-logo').value.trim();
 
-            if (!name || !link || !logo) {
-                alert('Please fill out all fields.');
-                return;
-            }
-
-            const newButtonData = { name, link, logo };
-
-            if (editingButtonIndex !== null) {
-                buttons[editingButtonIndex] = newButtonData;
+            if (name && link && logo) {
+                buttons.push({ name, link, logo });
+                localStorage.setItem('buttons', JSON.stringify(buttons));
+                loadButtons();
+                popupForm.style.display = 'none';
+                overlay.style.display = 'none';
             } else {
-                buttons.push(newButtonData);
+                alert('Please fill all fields!');
             }
+        });
 
-            localStorage.setItem('buttons', JSON.stringify(buttons));
-            loadButtons();
-
+        closePopup.addEventListener('click', () => {
             popupForm.style.display = 'none';
             overlay.style.display = 'none';
         });
 
-        buttonContainer.addEventListener('click', (e) => {
-            if (e.target.closest('.dynamic-button')) {
-                const buttonElement = e.target.closest('.dynamic-button');
-                editingButtonIndex = buttonElement.dataset.index;
-
-                const buttonData = buttons[editingButtonIndex];
-                popupForm.style.display = 'block';
-                overlay.style.display = 'block';
-                buttonNameInput.value = buttonData.name;
-                buttonLinkInput.value = buttonData.link;
-                buttonLogoInput.value = buttonData.logo;
-            }
-        });
-
-        // Initialize
         loadButtons();
     </script>
 </body>
