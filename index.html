@@ -63,15 +63,13 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 15px;
+            padding: 15px 25px;
             background: linear-gradient(90deg, #43cea2, #185a9d);
             color: white;
             text-decoration: none;
             font-size: 18px;
             border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 30px;
         }
 
         .dynamic-button img {
@@ -82,9 +80,14 @@
             border: 2px solid #fff;
         }
 
-        .dynamic-button:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(67, 206, 162, 0.5);
+        .dynamic-button button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            border: none;
+            background: #ff7e5f;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
         }
 
         #login-form, #popup-form {
@@ -166,7 +169,7 @@
 <body>
     <div class="header">
         <button class="login-button" id="login-button">Login</button>
-        <button class="edit-button" id="edit-button" style="display: none;">Add/Edit</button>
+        <button class="edit-button" id="edit-button" style="display: none;">Edit</button>
     </div>
     <div id="overlay"></div>
 
@@ -203,39 +206,36 @@
         const PASSWORD = "rahiyan";
 
         let buttons = JSON.parse(localStorage.getItem('buttons')) || [];
-        let editIndex = null; // ইডিট করা বাটনের ইনডেক্স
+        let editIndex = null;
 
         function loadButtons() {
             buttonContainer.innerHTML = '';
             buttons.forEach((button, index) => {
-                const newButton = document.createElement('div');
-                newButton.className = 'dynamic-button';
-                newButton.innerHTML = `
+                const buttonDiv = document.createElement('div');
+                buttonDiv.className = 'dynamic-button';
+                buttonDiv.innerHTML = `
                     <a href="${button.link}" target="_blank" style="text-decoration: none; color: white;">
                         <img src="${button.logo}" alt="Logo"> ${button.name}
                     </a>
-                    <button class="edit-individual-button" data-index="${index}" style="margin-left: 10px; padding: 5px 10px; border: none; background: #ff7e5f; border-radius: 5px; color: white; cursor: pointer;">
-                        Edit
-                    </button>
+                    ${editButton.style.display === 'block' ? `<button class="edit-individual-button" data-index="${index}">Edit</button>` : ''}
                 `;
-                buttonContainer.appendChild(newButton);
+                buttonContainer.appendChild(buttonDiv);
             });
 
-            const editButtons = document.querySelectorAll('.edit-individual-button');
-            editButtons.forEach((btn) => {
+            document.querySelectorAll('.edit-individual-button').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const index = e.target.getAttribute('data-index');
-                    editIndex = index;
-                    loadFormForEdit(index);
+                    editIndex = e.target.dataset.index;
+                    loadFormForEdit(editIndex);
                 });
             });
         }
 
         function loadFormForEdit(index) {
-            const buttonData = buttons[index];
-            document.getElementById('button-name').value = buttonData.name;
-            document.getElementById('button-link').value = buttonData.link;
-            document.getElementById('button-logo').value = buttonData.logo;
+            const button = buttons[index];
+            document.getElementById('button-name').value = button.name;
+            document.getElementById('button-link').value = button.link;
+            document.getElementById('button-logo').value = button.logo;
+
             popupForm.style.display = 'block';
             overlay.style.display = 'block';
         }
@@ -255,18 +255,14 @@
                 overlay.style.display = 'none';
                 loginButton.style.display = 'none';
                 editButton.style.display = 'block';
+                loadButtons();
             } else {
                 alert('Invalid username or password!');
             }
         });
 
-        overlay.addEventListener('click', () => {
-            loginForm.style.display = 'none';
-            popupForm.style.display = 'none';
-            overlay.style.display = 'none';
-        });
-
         editButton.addEventListener('click', () => {
+            editIndex = null;
             popupForm.style.display = 'block';
             overlay.style.display = 'block';
         });
@@ -279,7 +275,6 @@
             if (name && link && logo) {
                 if (editIndex !== null) {
                     buttons[editIndex] = { name, link, logo };
-                    editIndex = null;
                 } else {
                     buttons.push({ name, link, logo });
                 }
@@ -294,6 +289,12 @@
 
         closePopup.addEventListener('click', () => {
             popupForm.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+
+        overlay.addEventListener('click', () => {
+            popupForm.style.display = 'none';
+            loginForm.style.display = 'none';
             overlay.style.display = 'none';
         });
 
