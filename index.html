@@ -3,122 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jump Game</title>
+    <title>Persistent Button Manager</title>
     <style>
-        /* Game area */
-        #game {
-            position: relative;
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .header {
             width: 100%;
-            height: 300px;
-            background: linear-gradient(to bottom, #87CEEB, #5DBB63); /* Sky and ground */
-            overflow: hidden;
-            border: 2px solid black;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
         }
 
-        /* Player (character) */
-        #player {
-            position: absolute;
-            bottom: 50px;
-            left: 50px;
-            width: 40px;
-            height: 40px;
-            background-color: blue;
-            border-radius: 50%;
-            z-index: 10;
+        .edit-button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
         }
 
-        /* Ground */
-        #ground {
-            position: absolute;
-            bottom: 0;
+        .edit-button:hover {
+            background-color: #0056b3;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .dynamic-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .dynamic-button img {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+
+        .dynamic-button:hover {
+            background-color: #45a049;
+        }
+
+        #popup-form {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        #popup-form input {
+            width: calc(100% - 20px);
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #popup-form button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #popup-form .save-button {
+            background-color: #28a745;
+            color: white;
+        }
+
+        #popup-form .close-button {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
             left: 0;
             width: 100%;
-            height: 50px;
-            background-color: #5DBB63;
-            border-top: 2px solid #3E8E41;
-        }
-
-        /* Obstacle */
-        #obstacle {
-            position: absolute;
-            bottom: 50px;
-            right: 0;
-            width: 30px;
-            height: 30px;
-            background-color: red;
-            animation: moveObstacle 2s linear infinite;
-        }
-
-        /* Obstacle animation */
-        @keyframes moveObstacle {
-            from {
-                right: -30px;
-            }
-            to {
-                right: 100%;
-            }
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
         }
     </style>
 </head>
 <body>
-    <div id="game">
-        <div id="player"></div>
-        <div id="ground"></div>
-        <div id="obstacle"></div>
+    <div class="header">
+        <button class="edit-button" id="edit-button">Edit</button>
     </div>
+    <div class="button-container" id="button-container"></div>
+
+    <div id="overlay"></div>
+
+    <div id="popup-form">
+        <h3>Add/Edit Button</h3>
+        <input type="text" id="button-name" placeholder="Enter Button Name" required>
+        <input type="text" id="button-link" placeholder="Enter Button Link" required>
+        <input type="text" id="button-logo" placeholder="Enter Button Logo URL" required>
+        <button class="save-button" id="save-button">Save</button>
+        <button class="close-button" id="close-button">Close</button>
+    </div>
+
     <script>
-        const player = document.getElementById("player");
-        const obstacle = document.getElementById("obstacle");
+        const editButton = document.getElementById('edit-button');
+        const popupForm = document.getElementById('popup-form');
+        const overlay = document.getElementById('overlay');
+        const saveButton = document.getElementById('save-button');
+        const closeButton = document.getElementById('close-button');
+        const buttonContainer = document.getElementById('button-container');
+        const buttonNameInput = document.getElementById('button-name');
+        const buttonLinkInput = document.getElementById('button-link');
+        const buttonLogoInput = document.getElementById('button-logo');
 
-        let isJumping = false;
+        let editingButtonIndex = null;
+        let buttons = JSON.parse(localStorage.getItem('buttons')) || [];
 
-        // Jump function
-        function jump() {
-            if (isJumping) return; // Prevent double jumps
-
-            isJumping = true;
-            let position = 0;
-
-            // Jump up
-            const upInterval = setInterval(() => {
-                if (position >= 150) {
-                    clearInterval(upInterval);
-
-                    // Fall down
-                    const downInterval = setInterval(() => {
-                        if (position <= 0) {
-                            clearInterval(downInterval);
-                            isJumping = false;
-                        }
-                        position -= 5;
-                        player.style.bottom = position + "px";
-                    }, 20);
-                }
-                position += 5;
-                player.style.bottom = position + "px";
-            }, 20);
+        // Load buttons from localStorage
+        function loadButtons() {
+            buttonContainer.innerHTML = '';
+            buttons.forEach((button, index) => {
+                const newButton = document.createElement('a');
+                newButton.className = 'dynamic-button';
+                newButton.href = button.link;
+                newButton.innerHTML = `<img src="${button.logo}" alt="Button Logo"><span>${button.name}</span>`;
+                newButton.dataset.index = index;
+                buttonContainer.appendChild(newButton);
+            });
         }
 
-        // Check collision
-        function checkCollision() {
-            const playerBottom = parseInt(window.getComputedStyle(player).getPropertyValue("bottom"));
-            const obstacleLeft = parseInt(window.getComputedStyle(obstacle).getPropertyValue("right"));
+        editButton.addEventListener('click', () => {
+            popupForm.style.display = 'block';
+            overlay.style.display = 'block';
+            buttonNameInput.value = '';
+            buttonLinkInput.value = '';
+            buttonLogoInput.value = '';
+            editingButtonIndex = null;
+        });
 
-            if (obstacleLeft > 650 && obstacleLeft < 700 && playerBottom <= 50) {
-                alert("Game Over!");
-                window.location.reload();
+        closeButton.addEventListener('click', () => {
+            popupForm.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+
+        saveButton.addEventListener('click', () => {
+            const name = buttonNameInput.value.trim();
+            const link = buttonLinkInput.value.trim();
+            const logo = buttonLogoInput.value.trim();
+
+            if (!name || !link || !logo) {
+                alert('Please fill out all fields.');
+                return;
             }
-        }
 
-        // Listen for spacebar to jump
-        document.addEventListener("keydown", (event) => {
-            if (event.code === "Space") {
-                jump();
+            const newButtonData = { name, link, logo };
+
+            if (editingButtonIndex !== null) {
+                buttons[editingButtonIndex] = newButtonData;
+            } else {
+                buttons.push(newButtonData);
+            }
+
+            localStorage.setItem('buttons', JSON.stringify(buttons));
+            loadButtons();
+
+            popupForm.style.display = 'none';
+            overlay.style.display = 'none';
+        });
+
+        buttonContainer.addEventListener('click', (e) => {
+            if (e.target.closest('.dynamic-button')) {
+                const buttonElement = e.target.closest('.dynamic-button');
+                editingButtonIndex = buttonElement.dataset.index;
+
+                const buttonData = buttons[editingButtonIndex];
+                popupForm.style.display = 'block';
+                overlay.style.display = 'block';
+                buttonNameInput.value = buttonData.name;
+                buttonLinkInput.value = buttonData.link;
+                buttonLogoInput.value = buttonData.logo;
             }
         });
 
-        // Game loop
-        setInterval(checkCollision, 50);
+        // Initialize
+        loadButtons();
     </script>
 </body>
 </html>
